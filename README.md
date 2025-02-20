@@ -1,5 +1,5 @@
 # OpenCTI-Lab-2025
-Docker file for a Open CTI build
+This repository contains a Docker Compose file for deploying the OpenCTI platform along with some free Open Source CTI feeds.
 # **Example README File**
 
 ## **Project Title**
