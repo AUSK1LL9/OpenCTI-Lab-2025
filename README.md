@@ -1,14 +1,10 @@
 # OpenCTI-Lab-2025
 This repository contains a Docker Compose file for deploying the OpenCTI platform along with some free Open Source CTI feeds.
-# **Example README File**
-
-## **Project Title**
-
-Project Title is a description of the project and its purpose.
 
 ## **Introduction**
+OpenCTI is an open source platform allowing organizations to manage their cyber threat intelligence knowledge and observables. It has been created in order to structure, store, organize and visualize technical and non-technical information about cyber threats.
 
-Project Title is a project that does something useful. It was created to solve a particular problem, and it provides a solution that is better than the alternatives.
+The structuration of the data is performed using a knowledge schema based on the STIX2 standards. It has been designed as a modern web application including a GraphQL API and an UX oriented frontend. Also, OpenCTI can be integrated with other tools and applications such as MISP, TheHive, MITRE ATT&CK, etc.
 
 ## **Installation**
 
