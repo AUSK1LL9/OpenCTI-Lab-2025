@@ -13,23 +13,23 @@ The structuration of the data is performed using a knowledge schema based on the
 
 To install Project Title, follow these steps:
 
-1. Clone the repository: **`git clone https://github.com/username/project-title.git`**
-2. Navigate to the project directory: **`cd project-title`**
-3. Install dependencies: **`npm install`**
-4. Build the project: **`npm run build`**
-5. Start the project: **`npm start`**
+1. Install RHEL/Rocky/Alama Linux (System Hardening guide can be found here *link here*)
+2. Install Portainer (Optional - Portainer install guide can be found here *link here*)
+3. Create a new Stack in Portainer Called OpenCTI
+4. Load in OPenCTI build file from this repo
+5. Set System variables (loaded in from redacted .yml file in this repo)
+6. Build stack in Portainer
+7. Log in and enjoy :)
 
 ## **Usage**
 
 To use Project Title, follow these steps:
 
-1. Open the project in your favorite code editor.
-2. Modify the source code to fit your needs.
-3. Build the project: **`npm run build`**
-4. Start the project: **`npm start`**
-5. Use the project as desired.
+1. Access OpenCTI using a Web Browser on port 8080 (default - can be changed in docker file)
+2. Optional: Ensure to enable MFA inside OpenCTI
+3. Optional: Ensure to use Reverse Proxy to present Custom SSL certificate for authetntic, signed and verified HTTPS access
 
-## **Contributing**
+## **Contributing** (Share is caring)
 
 If you'd like to contribute to Project Title, here are some guidelines:
 
