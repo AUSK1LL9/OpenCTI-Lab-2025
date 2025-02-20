@@ -21,6 +21,8 @@ To install Project Title, follow these steps:
 6. Build stack in Portainer
 7. Log in and enjoy :)
 
+![image](https://github.com/user-attachments/assets/b52b2017-9053-4cee-8c31-e9d96b6f497a)
+
 ## **Usage**
 
 To use Project Title, follow these steps:
