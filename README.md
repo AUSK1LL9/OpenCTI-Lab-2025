@@ -1,6 +1,9 @@
 # OpenCTI-Lab-2025
 This repository contains a Docker Compose file for deploying the OpenCTI platform along with some free Open Source CTI feeds.
 
+![image](https://github.com/user-attachments/assets/de603e6b-9c15-48ae-8b67-2ced9349c591)
+
+
 ## **Introduction**
 OpenCTI is an open source platform allowing organizations to manage their cyber threat intelligence knowledge and observables. It has been created in order to structure, store, organize and visualize technical and non-technical information about cyber threats.
 
