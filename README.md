@@ -1,101 +1,86 @@
-# OpenCTI-Lab-2025
-This repository contains a Docker Compose file for deploying the OpenCTI platform along with some free Open Source CTI feeds.
+**ISM-0487 Compliance Validation (Security Researcher Perspective)**
 
-![image](https://github.com/user-attachments/assets/de603e6b-9c15-48ae-8b67-2ced9349c591)
+As a security researcher, validating compliance with **ISM-0487** involves assessing the configuration of **SSH connections that utilize logins without a passphrase (e.g., key-based authentication without a key passphrase)**. The control specifically mandates the disabling of certain functionalities in such scenarios to reduce the attack surface.
 
+**ISM-0487 Reference:** "When using logins without a passphrase for SSH connections, the following are disabled:
 
-## **Introduction**
-OpenCTI is an open source platform allowing organizations to manage their cyber threat intelligence knowledge and observables. It has been created in order to structure, store, organize and visualize technical and non-technical information about cyber threats.
+- access from IP addresses that do not require access
+- port forwarding
+- agent credential forwarding
+- X11 forwarding
+- console access."
 
-The structuration of the data is performed using a knowledge schema based on the STIX2 standards. It has been designed as a modern web application including a GraphQL API and an UX oriented frontend. Also, OpenCTI can be integrated with other tools and applications such as MISP, TheHive, MITRE ATT&CK, etc.
+This control aims to mitigate the risk associated with compromised SSH keys that lack a passphrase, preventing an attacker from easily leveraging them for further lateral movement, data exfiltration, or unauthorized access.
 
-## **Installation**
+Here are the TTPs you should employ to check and verify compliance with ISM-0487, including what to test and examine:
 
-To install Project Title, follow these steps:
+**I. Configuration Review (Primary Method)**
 
-1. Install RHEL/Rocky/Alama Linux (System Hardening guide can be found here *link here*)
-2. Install Portainer (Optional - Portainer install guide can be found here *link here*)
-3. Create a new Stack in Portainer Called OpenCTI
-4. Load in OPenCTI build file from this repo
-5. Set System variables (loaded in from redacted .yml file in this repo)
-6. Build stack in Portainer
-7. Log in and enjoy :)
+- **Tactic:** Secure Configuration Verification
+- **Technique:** Examine SSH server configuration files (sshd_config) and client configurations to ensure mandated restrictions are in place.
+- **Procedure:**
+    1.  **Identify SSH Servers:** Determine all systems acting as SSH servers within the scope.
+    2.  **Locate sshd_config:** On Linux/Unix-like systems, the primary SSH server configuration file is typically /etc/ssh/sshd_config.
+    3.  **Identify Key-Based Authentication:** Look for configurations that enable key-based authentication, specifically where passphrases might not be enforced (e.g., PubkeyAuthentication yes).
+    4.  **Verify Disabled Features:** Within sshd_config (or relevant client configurations if applicable), examine the settings for the following directives:
+        - **AllowTcpForwarding no**: Disables port forwarding (local, remote, and dynamic).
+        - **AllowAgentForwarding no**: Disables agent credential forwarding.
+        - **X11Forwarding no**: Disables X11 forwarding.
+        - **PermitRootLogin no** (or prohibit-password / without-password if root uses keys without passphrase): While not directly "console access" in the same way, it prevents direct root login via SSH, which is a common hardening step.
+        - **PermitTTY no** (for specific users/groups that might use keys without passphrase): Disables pseudo-terminal allocation, which effectively prevents interactive console access. This is more granular.
+        - **ListenAddress / AllowUsers / AllowGroups / DenyUsers / DenyGroups**: These control access from IP addresses. While not a direct "disable" for IP addresses, the absence of specific Allow directives or the presence of Deny directives for unauthorized IPs would indicate compliance.
+- **Examples:**
+    1.  **Test:** SSH into a target server (if authorized) and attempt to:
+        - Establish a local port forward: ssh -L 8080:localhost:80 &lt;user&gt;@&lt;server&gt;
+        - Establish an agent forward: ssh -A &lt;user&gt;@&lt;server&gt;
+        - Establish an X11 forward: ssh -X &lt;user&gt;@&lt;server&gt;
+        - Attempt to gain console access: ssh &lt;user&gt;@&lt;server&gt; (if PermitTTY no is set, you might not get a shell).
+    2.  **Examine:**
+        - Look for AllowTcpForwarding yes when it should be no.
+        - Look for AllowAgentForwarding yes when it should be no.
+        - Look for X11Forwarding yes when it should be no.
+        - Check for PermitTTY yes for users with passphrase-less keys.
+        - Verify that ListenAddress is configured only for necessary interfaces, and that AllowUsers/AllowGroups are tightly controlled, with no broad Allow rules that would permit access from unauthorized IPs.
 
-![image](https://github.com/user-attachments/assets/b52b2017-9053-4cee-8c31-e9d96b6f497a)
+**II. Network-Level Verification**
 
-## **Usage**
+- **Tactic:** Network Access Control Assessment
+- **Technique:** Verify that network-level controls (firewalls) restrict access to SSH services from unauthorized IP addresses.
+- **Procedure:**
+    1.  **Firewall Rule Review:** Examine firewall configurations (host-based like iptables, firewalld, Windows Firewall, or network-based firewalls) that protect SSH ports (default 22).
+    2.  **Source IP Restrictions:** Look for rules that explicitly permit SSH access only from known, authorized source IP addresses or subnets.
+    3.  **Default Deny:** Confirm that the default firewall policy for SSH is "deny all" and only explicitly allowed traffic is permitted.
+- **Examples:**
+    1.  **Tools:** iptables -L, firewall-cmd --list-all, netsh advfirewall firewall show rule name=all (Windows), review network firewall policies.
+    2.  **Test:** From an unauthorized IP address, attempt to connect to the SSH server.
+        - ssh &lt;user&gt;@&lt;server&gt;
+        - nmap -p 22 &lt;server&gt; (to check if port is open from unauthorized location).
+    3.  **Examine:** Look for ANY or 0.0.0.0/0 in source IP fields for SSH rules when more restrictive access is required.
 
-To use Project Title, follow these steps:
+**III. Active Directory/Identity Management Integration (If Applicable)**
 
-1. Access OpenCTI using a Web Browser on port 8080 (default - can be changed in docker file)
-2. Optional: Ensure to enable MFA inside OpenCTI
-3. Optional: Ensure to use Reverse Proxy to present Custom SSL certificate for authetntic, signed and verified HTTPS access
+- **Tactic:** Centralized Access Control
+- **Technique:** If SSH access is integrated with Active Directory or another centralized identity management system, verify that access policies align with ISM-0487.
+- **Procedure:**
+    1.  **Review Integration:** Understand how SSH authentication (especially key-based) is managed. Is it directly on the host, or integrated with LDAP/AD?
+    2.  **Policy Enforcement:** If AD groups control SSH access, verify that users/groups allowed to use passphrase-less keys are appropriately restricted from other functionalities (as per ISM-0487).
+- **Examples:**
+    1.  **Test:** Attempt to use a passphrase-less key from an account that is not in the authorized AD group for SSH access.
+    2.  **Examine:** Review AD group memberships that grant SSH access and ensure they are tightly controlled and consistent with the principle of least privilege.
 
-## **Contributing** (Share is caring)
+**IV. Auditing & Logging**
 
-If you'd like to contribute to Project Title, here are some guidelines:
+- **Tactic:** Detective Controls
+- **Technique:** Verify that SSH activity, especially attempts to use disabled features, is logged and monitored.
+- **Procedure:**
+    1.  **SSH Log Configuration:** Ensure SSH server logging is enabled and configured for sufficient verbosity (e.g., LogLevel VERBOSE in sshd_config).
+    2.  **Log Collection:** Confirm SSH logs are sent to a centralized logging system (e.g., SIEM like Elastic Stack).
+    3.  **Alerting:** Verify that alerts are configured for suspicious SSH activity, such as:
+        - Repeated failed login attempts.
+        - Attempts to use disabled features (e.g., port forwarding attempts being logged as denied).
+        - Logins from unusual source IPs.
+- **Examples:**
+    1.  **Test:** After attempting a port forward (which should be denied), check the SSH server logs (/var/log/auth.log on Linux) and the centralized logging system for entries indicating the denial.
+    2.  **Examine:** Look for gaps in SSH logging, or evidence of successful use of features that should be disabled.
 
-1. Fork the repository.
-2. Create a new branch for your changes.
-3. Make your changes.
-4. Write tests to cover your changes.
-5. Run the tests to ensure they pass.
-6. Commit your changes.
-7. Push your changes to your forked repository.
-8. Submit a pull request.
-
-## **License**
-
-Project Title is released under the MIT License. See the **[LICENSE](https://www.blackbox.ai/share/LICENSE)** file for details.
-
-## **Authors and Acknowledgment**
-
-Project Title was created by **[Your Name](https://github.com/username)**.
-
-Additional contributors include:
-
-- **[Contributor Name](https://github.com/contributor-name)**
-- **[Another Contributor](https://github.com/another-contributor)**
-
-Thank you to all the contributors for their hard work and dedication to the project.
-
-## **Code of Conduct**
-
-Please note that this project is released with a Contributor Code of Conduct. By participating in this project, you agree to abide by its terms. See the **[CODE_OF_CONDUCT.md](https://www.blackbox.ai/share/CODE_OF_CONDUCT.md)** file for more information.
-
-## **FAQ**
-
-**Q:** What is Project Title?
-
-**A:** Project Title is a project that does something useful.
-
-**Q:** How do I install Project Title?
-
-**A:** Follow the installation steps in the README file.
-
-**Q:** How do I use Project Title?
-
-**A:** Follow the usage steps in the README file.
-
-**Q:** How do I contribute to Project Title?
-
-**A:** Follow the contributing guidelines in the README file.
-
-**Q:** What license is Project Title released under?
-
-**A:** Project Title is released under the MIT License. See the **[LICENSE](https://www.blackbox.ai/share/LICENSE)** file for details.
-
-## **Changelog**
-
-- **0.1.0:** Initial release
-- **0.1.1:** Fixed a bug in the build process
-- **0.2.0:** Added a new feature
-- **0.2.1:** Fixed a bug in the new feature
-
-## **Contact**
-
-If you have any questions or comments about Project Title, please contact **[Your Name](you@example.com)**.
-
-## **Conclusion**
-
-That's it! This is a basic template for a proper README file for a general project. You can customize it to fit your needs, but make sure to include all the necessary information. A good README file can help users understand and use your project, and it can also help attract contributors.
+By systematically applying these TTPs, a security researcher can thoroughly assess an organization's compliance with ISM-0487, specifically focusing on the secure configuration of SSH connections that utilize passphrase-less authentication. Always ensure testing is performed within an authorized scope and all findings are meticulously documented.
